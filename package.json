@@ -1,6 +1,6 @@
 {
   "name": "@adminforth/open-signup",
-  "version": "1.0.9",
+  "version": "1.0.9", 
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
@@ -9,11 +9,45 @@
     "rollout": "npm run build && npm publish --access public",
     "prepare": "npm link adminforth"
   },
-  "keywords": [],
-  "author": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/devforth/adminforth-open-signup.git"
+  },
+  "keywords": ["adminforth", "signup"],
+  "author": "devforth",
   "license": "ISC",
-  "description": "",
+  "description": "Open signup for adminforth",
   "dependencies": {
     "@aws-sdk/client-ses": "^3.654.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.7",
+    "semantic-release": "^24.2.1",
+    "semantic-release-slack-bot": "^4.0.2",
+    "typescript": "^5.7.3"
+  },
+  "release": {
+    "plugins": [
+      "@semantic-release/commit-analyzer",
+      "@semantic-release/release-notes-generator",
+      "@semantic-release/npm",
+      "@semantic-release/github",
+      [
+        "semantic-release-slack-bot",
+        {
+          "notifyOnSuccess": true,
+          "notifyOnFail": true,
+          "slackIcon": ":package:",
+          "markdownReleaseNotes": true
+        }
+      ]
+    ],
+    "branches": [
+      "main",
+      {
+        "name": "next",
+        "prerelease": true
+      }
+    ]
   }
 }
