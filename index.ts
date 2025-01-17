@@ -241,7 +241,6 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
         // create user
         if (!existingUser) {
           if (this.options.hooks?.beforeUserSave) {
-  
             const hook = this.options.hooks.beforeUserSave;
             const recordToCreate = {
               ...(this.options.defaultFieldValues || {}),
