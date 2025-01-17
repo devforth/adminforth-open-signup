@@ -195,7 +195,7 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
       noAuth: true,
       handler: async ({ body, response, headers, query, cookies, tr }) => {
         const { email, url, password } = body;
-
+        const extra = { body, headers, query, cookies, requestUrl: url };
         // validate email
         if (this.emailField.validation) {
           for (const { regExp, message } of this.emailField.validation) {
@@ -240,12 +240,52 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
 
         // create user
         if (!existingUser) {
+          if (this.options.hooks?.beforeUserSave) {
+  
+            const hook = this.options.hooks.beforeUserSave;
+            const recordToCreate = {
+              ...(this.options.defaultFieldValues || {}),
+              ...(this.options.confirmEmails ? { [this.options.confirmEmails.emailConfirmedField]: false } : {}),  
+              [this.emailField.name]: normalizedEmail,
+              [this.options.passwordHashField]: password ? await AdminForth.Utils.generatePasswordHash(password) : '',
+            };
+            const resp = await hook({ 
+              resource: this.authResource,
+              record: recordToCreate,
+              adminforth: this.adminforth,
+              extra,
+            });
+
+            if (!resp || (!resp.ok && !resp.error)) {
+              throw new Error(`Hook beforeUserSave must return object with {ok: true} or { error: 'Error' } `);
+            }
+            if (resp.error) {
+              return { error: resp.error };
+            }
+          }
           const created = await this.adminforth.resource(this.authResource.resourceId).create({
             ...(this.options.defaultFieldValues || {}),
             ...(this.options.confirmEmails ? { [this.options.confirmEmails.emailConfirmedField]: false } : {}),  
             [this.emailField.name]: normalizedEmail,
             [this.options.passwordHashField]: password ? await AdminForth.Utils.generatePasswordHash(password) : '',
           });
+
+          if (this.options.hooks?.afterUserSave) {
+            const hook = this.options.hooks.afterUserSave;
+            const resp = await hook({ 
+              resource: this.authResource,
+              record: created,
+              adminforth: this.adminforth,
+              extra,
+            });
+
+            if (!resp || (!resp.ok && !resp.error)) {
+              throw new Error(`Hook afterUserSave must return object with {ok: true} or { error: 'Error' } `);
+            }
+            if (resp.error) {
+              return { error: resp.error };
+            }
+          }
         }
         
         if (!this.options.confirmEmails) {
