@@ -200,7 +200,7 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
         if (this.emailField.validation) {
           for (const { regExp, message } of this.emailField.validation) {
             if (!new RegExp(regExp).test(email)) {
-              return { error: message, ok: false };
+              return { error: await tr(message, 'opensignup'), ok: false };
             }
           }
         }
@@ -209,20 +209,20 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
         if (!this.options.confirmEmails) {
           if (password.length < this.passwordField.minLength) {
             return { 
-              error: tr(`Password must be at least ${this.passwordField.minLength} characters long`, 'opensignup'),
+              error: await tr(`Password must be at least ${this.passwordField.minLength} characters long`, 'opensignup'),
               ok: false 
             };
           }
           if (password.length > this.passwordField.maxLength) {
             return { 
-              error: tr(`Password must be at most ${this.passwordField.maxLength} characters long`, 'opensignup'),
+              error: await tr(`Password must be at most ${this.passwordField.maxLength} characters long`, 'opensignup'),
               ok: false 
             };
           }
           if (this.passwordField.validation) {
             for (const { regExp, message } of this.passwordField.validation) {
               if (!new RegExp(regExp).test(password)) {
-                return { error: tr(message, 'opensignup'), ok: false };
+                return { error: await tr(message, 'opensignup'), ok: false };
               }
             }
           }
@@ -235,7 +235,7 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
         // first check again if email already exists
         const existingUser = await this.adminforth.resource(this.authResource.resourceId).get(Filters.EQ(this.emailField.name, normalizedEmail));
         if ((!this.options.confirmEmails && existingUser) || (this.options.confirmEmails && existingUser?.[this.emailConfirmedField.name])) {
-          return { error: tr('Email already exists', 'opensignup'), ok: false };
+          return { error: await tr(`Email already exists`, 'opensignup'), ok: false };
         }
 
         // create user
