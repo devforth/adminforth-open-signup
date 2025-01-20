@@ -203,7 +203,6 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
             }
           }
         }
-
         // validate password
         if (!this.options.confirmEmails) {
           if (password.length < this.passwordField.minLength) {
