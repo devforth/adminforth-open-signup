@@ -5,8 +5,7 @@
   "types": "dist/index.d.ts",
   "type": "module",
   "scripts": {
-    "build": "tsc && rsync -av --exclude 'node_modules' custom dist/ && npm version patch",
-    "rollout": "npm run build && npm publish --access public",
+    "build": "tsc && rsync -av --exclude 'node_modules' custom dist/",
     "prepare": "npm link adminforth"
   },
   "repository": {
