@@ -195,12 +195,12 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
       noAuth: true,
       handler: async ({ body, response, headers, query, cookies, tr }) => {
         const { email, url, password } = body;
-
+        const extra = { body, headers, query, cookies, requestUrl: url };
         // validate email
         if (this.emailField.validation) {
           for (const { regExp, message } of this.emailField.validation) {
             if (!new RegExp(regExp).test(email)) {
-              return { error: message, ok: false };
+              return { error: await tr(message, 'opensignup'), ok: false };
             }
           }
         }
@@ -209,20 +209,20 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
         if (!this.options.confirmEmails) {
           if (password.length < this.passwordField.minLength) {
             return { 
-              error: tr(`Password must be at least ${this.passwordField.minLength} characters long`, 'opensignup'),
+              error: await tr(`Password must be at least ${this.passwordField.minLength} characters long`, 'opensignup'),
               ok: false 
             };
           }
           if (password.length > this.passwordField.maxLength) {
             return { 
-              error: tr(`Password must be at most ${this.passwordField.maxLength} characters long`, 'opensignup'),
+              error: await tr(`Password must be at most ${this.passwordField.maxLength} characters long`, 'opensignup'),
               ok: false 
             };
           }
           if (this.passwordField.validation) {
             for (const { regExp, message } of this.passwordField.validation) {
               if (!new RegExp(regExp).test(password)) {
-                return { error: tr(message, 'opensignup'), ok: false };
+                return { error: await tr(message, 'opensignup'), ok: false };
               }
             }
           }
@@ -235,17 +235,56 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
         // first check again if email already exists
         const existingUser = await this.adminforth.resource(this.authResource.resourceId).get(Filters.EQ(this.emailField.name, normalizedEmail));
         if ((!this.options.confirmEmails && existingUser) || (this.options.confirmEmails && existingUser?.[this.emailConfirmedField.name])) {
-          return { error: tr('Email already exists', 'opensignup'), ok: false };
+          return { error: await tr(`Email already exists`, 'opensignup'), ok: false };
         }
 
         // create user
         if (!existingUser) {
+          if (this.options.hooks?.beforeUserSave) {
+            const hook = this.options.hooks.beforeUserSave;
+            const recordToCreate = {
+              ...(this.options.defaultFieldValues || {}),
+              ...(this.options.confirmEmails ? { [this.options.confirmEmails.emailConfirmedField]: false } : {}),  
+              [this.emailField.name]: normalizedEmail,
+              [this.options.passwordHashField]: password ? await AdminForth.Utils.generatePasswordHash(password) : '',
+            };
+            const resp = await hook({ 
+              resource: this.authResource,
+              record: recordToCreate,
+              adminforth: this.adminforth,
+              extra,
+            });
+
+            if (!resp || (!resp.ok && !resp.error)) {
+              throw new Error(`Hook beforeUserSave must return object with {ok: true} or { error: 'Error' } `);
+            }
+            if (resp.error) {
+              return { error: resp.error };
+            }
+          }
           const created = await this.adminforth.resource(this.authResource.resourceId).create({
             ...(this.options.defaultFieldValues || {}),
             ...(this.options.confirmEmails ? { [this.options.confirmEmails.emailConfirmedField]: false } : {}),  
             [this.emailField.name]: normalizedEmail,
             [this.options.passwordHashField]: password ? await AdminForth.Utils.generatePasswordHash(password) : '',
           });
+
+          if (this.options.hooks?.afterUserSave) {
+            const hook = this.options.hooks.afterUserSave;
+            const resp = await hook({ 
+              resource: this.authResource,
+              record: created,
+              adminforth: this.adminforth,
+              extra,
+            });
+
+            if (!resp || (!resp.ok && !resp.error)) {
+              throw new Error(`Hook afterUserSave must return object with {ok: true} or { error: 'Error' } `);
+            }
+            if (resp.error) {
+              return { error: resp.error };
+            }
+          }
         }
         
         if (!this.options.confirmEmails) {

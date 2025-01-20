@@ -54,6 +54,15 @@ export interface PluginOptions {
      */
     adapter: EmailAdapter;
   }
+
+
+  /**
+   * Hooks to be executed before and after user is created
+   */
+  hooks?: {
+    beforeUserSave?: any;
+    afterUserSave?: any;
+  }
   
 
 }
