@@ -240,14 +240,15 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
 
         // create user
         if (!existingUser) {
+          let recordToCreate = {
+            ...(this.options.defaultFieldValues || {}),
+            ...(this.options.confirmEmails ? { [this.options.confirmEmails.emailConfirmedField]: false } : {}),  
+            [this.emailField.name]: normalizedEmail,
+            [this.options.passwordHashField]: password ? await AdminForth.Utils.generatePasswordHash(password) : '',
+          };
+
           if (this.options.hooks?.beforeUserSave) {
             const hook = this.options.hooks.beforeUserSave;
-            const recordToCreate = {
-              ...(this.options.defaultFieldValues || {}),
-              ...(this.options.confirmEmails ? { [this.options.confirmEmails.emailConfirmedField]: false } : {}),  
-              [this.emailField.name]: normalizedEmail,
-              [this.options.passwordHashField]: password ? await AdminForth.Utils.generatePasswordHash(password) : '',
-            };
             const resp = await hook({ 
               resource: this.authResource,
               record: recordToCreate,
@@ -261,13 +262,10 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
             if (resp.error) {
               return { error: resp.error };
             }
+            recordToCreate = resp.record || recordToCreate;
           }
-          const created = await this.adminforth.resource(this.authResource.resourceId).create({
-            ...(this.options.defaultFieldValues || {}),
-            ...(this.options.confirmEmails ? { [this.options.confirmEmails.emailConfirmedField]: false } : {}),  
-            [this.emailField.name]: normalizedEmail,
-            [this.options.passwordHashField]: password ? await AdminForth.Utils.generatePasswordHash(password) : '',
-          });
+
+          const created = await this.adminforth.resource(this.authResource.resourceId).create(recordToCreate);
 
           if (this.options.hooks?.afterUserSave) {
             const hook = this.options.hooks.afterUserSave;
