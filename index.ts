@@ -262,7 +262,6 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
             if (resp.error) {
               return { error: resp.error };
             }
-            recordToCreate = resp.record || recordToCreate;
           }
 
           const created = await this.adminforth.resource(this.authResource.resourceId).create(recordToCreate);
