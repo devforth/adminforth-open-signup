@@ -1,7 +1,6 @@
 import AdminForth, { AdminForthPlugin, Filters, suggestIfTypo, AdminForthDataTypes } from "adminforth";
 import type { IAdminForth, IHttpServer, AdminForthComponentDeclaration, AdminForthResourceColumn, AdminForthResource, BeforeLoginConfirmationFunction, HttpExtra } from "adminforth";
 import type { PluginOptions } from './types.js';
-import { error } from "console";
 
 
 export default class OpenSignupPlugin extends AdminForthPlugin {
@@ -162,7 +161,7 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
       method: 'POST',
       path: `/plugin/${this.pluginInstanceId}/complete-verified-signup`,
       noAuth: true,
-      handler: async ({ body, response, headers, query, cookies, tr }) => {
+      handler: async ({ body, response, headers, query, cookies, tr, requestUrl }) => {
         const { token, password } = body;
         const { email } = await this.adminforth.auth.verify(token, 'tempVerifyEmailToken', false);
         if (!email) {
@@ -185,7 +184,7 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
           [this.options.confirmEmails.emailConfirmedField]: true,
           [this.options.passwordHashField]: await AdminForth.Utils.generatePasswordHash(password),
         });
-        return await this.doLogin(email, response, { body, headers, query, cookies });
+        return await this.doLogin(email, response, { body, headers, query, cookies, requestUrl });
       }
     });
 
@@ -193,7 +192,7 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
       method: 'POST',
       path: `/plugin/${this.pluginInstanceId}/signup`,
       noAuth: true,
-      handler: async ({ body, response, headers, query, cookies, tr }) => {
+      handler: async ({ body, response, headers, query, cookies, tr, requestUrl }) => {
         const { email, url, password } = body;
         const extra = { body, headers, query, cookies, requestUrl: url };
         // validate email
@@ -204,7 +203,6 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
             }
           }
         }
-
         // validate password
         if (!this.options.confirmEmails) {
           if (password.length < this.passwordField.minLength) {
@@ -262,6 +260,7 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
             if (resp.error) {
               return { error: resp.error };
             }
+            recordToCreate = resp.record || recordToCreate;
           }
 
           const created = await this.adminforth.resource(this.authResource.resourceId).create(recordToCreate);
@@ -285,7 +284,7 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
         }
         
         if (!this.options.confirmEmails) {
-          const resp = await this.doLogin(email, response, { body, headers, query, cookies });
+          const resp = await this.doLogin(email, response, { body, headers, query, cookies, requestUrl });
           return resp;
         }
 
