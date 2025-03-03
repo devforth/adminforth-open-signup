@@ -165,19 +165,19 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
         const { token, password } = body;
         const { email } = await this.adminforth.auth.verify(token, 'tempVerifyEmailToken', false);
         if (!email) {
-          return { error: 'Invalid token', ok: false };
+          return { error: await tr('Invalid token', 'opensignup'), ok: false };
         }
 
         if(!password) {
-          return { error: tr('Password is required', 'opensignup'), ok: false };
+          return { error: await tr('Password is required', 'opensignup'), ok: false };
         }
         const userRecord = await this.adminforth.resource(this.authResource.resourceId).get(Filters.EQ(this.emailField.name, email));
         if (!userRecord) {
-          return { error: tr('User not found'), ok: false };
+          return { error: await tr('User not found', 'opensignup'), ok: false };
         }
 
         if (userRecord[this.options.confirmEmails.emailConfirmedField]) {
-          return { error: tr('Email already confirmed'), ok: false };
+          return { error: await tr('Email already confirmed', 'opensignup'), ok: false };
         }
 
         await this.adminforth.resource(this.authResource.resourceId).update(userRecord[this.authResource.columns.find((col) => col.primaryKey).name], {
@@ -294,7 +294,7 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
 
         const verifyToken = this.adminforth.auth.issueJWT({email, issuer: brandName }, 'tempVerifyEmailToken', '2h');
         process.env.HEAVY_DEBUG && console.log('🐛Sending reset tok to', verifyToken);
-        const emailText = tr(`
+        const emailText = await tr(`
                   Dear user,
                   Welcome to {brandName}! 
                   
@@ -311,7 +311,7 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
                 `, 'opensignup', { brandName, url, verifyToken }
         );
           
-        const emailHtml = tr(`
+        const emailHtml = await tr(`
               <html>
                 <head></head>
                 <body>
@@ -327,7 +327,7 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
               </html>
         `, 'opensignup', { brandName, url, verifyToken });
 
-        const emailSubject = tr(`Signup request at {brandName}`, 'opensignup', { brandName });
+        const emailSubject = await tr(`Signup request at {brandName}`, 'opensignup', { brandName });
 
         // send email with AWS SES this.options.providerOptions.AWS_SES
         this.options.confirmEmails.adapter.sendEmail(this.options.confirmEmails.sendFrom, email, emailText, emailHtml, emailSubject);
