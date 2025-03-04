@@ -310,23 +310,33 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
                                     
                 `, 'opensignup', { brandName, url, verifyToken }
         );
-          
-        const emailHtml = await tr(`
-              <html>
-                <head></head>
-                <body>
-                  <p>Dear user,</p>
-                  <p>Welcome to {brandName}!</p>
-                  <p>To confirm your email, click the link below:</p>
-                  <a href="{url}?token={verifyToken}">Confirm email</a>
-                  <p>If you didn't request this, please ignore this email.</p>
-                  <p>Link is valid for 2 hours.</p>
-                  <p>Thanks,</p>
-                  <p>The {brandName} Team</p>
-                </body>
-              </html>
-        `, 'opensignup', { brandName, url, verifyToken });
 
+        const emailData = {
+          greeting: await tr('Dear user,', 'opensignup'),
+          welcome: await tr('Welcome to {brandName}!', 'opensignup', { brandName }),
+          instruction: await tr('To confirm your email, click the link below:', 'opensignup'),
+          linkText: await tr('Confirm email', 'opensignup'),
+          disclaimer: await tr('If you didn\'t request this, please ignore this email.', 'opensignup'),
+          validity: await tr('Link is valid for 2 hours.', 'opensignup'),
+          thanks: await tr('Thanks,', 'opensignup'),
+          team: await tr('The {brandName} Team', 'opensignup', { brandName }),
+        };
+          
+        const emailHtml = `
+          <html>
+            <head></head>
+            <body>
+              <p>${emailData.greeting}</p>
+              <p>${emailData.welcome}</p>
+              <p>${emailData.instruction}</p>
+              <a href="${url}?token=${verifyToken}">${emailData.linkText}</a>
+              <p>${emailData.disclaimer}</p>
+              <p>${emailData.validity}</p>
+              <p>${emailData.thanks}</p>
+              <p>${emailData.team}</p>
+            </body>
+          </html>
+        `;
         const emailSubject = await tr(`Signup request at {brandName}`, 'opensignup', { brandName });
 
         // send email with AWS SES this.options.providerOptions.AWS_SES
