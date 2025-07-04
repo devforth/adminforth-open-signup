@@ -1,5 +1,5 @@
 <template>
-  <div class="relative flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-800 relative w-screen h-screen"
+  <div class="af-signup-page relative flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-800 relative w-screen h-screen"
     :style="coreStore.config?.loginBackgroundImage && backgroundPosition === 'over' ? {
       'background-image': 'url(' + loadFile(coreStore.config?.loginBackgroundImage) + ')',
       'background-size': 'cover',
@@ -23,7 +23,7 @@
 
     <!-- Main modal -->
     <div id="authentication-modal" tabindex="-1" 
-      class="overflow-y-auto flex flex-grow
+      class="af-signup-modal overflow-y-auto flex flex-grow
       overflow-x-hidden z-50 min-w-[350px]  justify-center items-center md:inset-0 h-[calc(100%-1rem)] max-h-full">
         <div class="relative p-4 w-full max-h-full max-w-[400px]">
             <!-- Modal content -->
@@ -39,61 +39,69 @@
                   <form v-if="!requestSent" class="space-y-4" role="alert" @submit.prevent>
                     <div v-if="!verifyToken" class="relative">
                       <label for="email" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">{{$t('Your email address')}}</label>
-                      <input type="email" name="email" id="email" 
+                      <Input type="email" name="email" id="email"
                         tabindex="1"
-                        autocomplete="username"  
+                        autocomplete="username"
                         @keydown.enter="passwordInput?.focus()"
                         ref="emailInput"
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white" 
+                        v-model="email"
+                        class="w-full"
                         placeholder="name@company.com" 
                         required
                       />
                     </div>
                     <div v-if="isPasswordNeeded" class="relative">
                       <label for="password" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">{{$t('Your password')}}</label>
-                      <input 
+                      <Input
                         tabindex="2"
                         autocomplete="new-password"
                         ref="passwordInput"
                         :type="unmasked ? 'text' : 'password'"
-                        name="password" id="password" 
+                        name="password" id="password"
                         v-model="password"
                         @keydown.enter="passwordConfirmationInput?.focus()"
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white" 
-                        :placeholder="$t('New password')" required 
-                      />
-                      
-                      <button
-                        type="button"
-                        @click="unmasked = !unmasked"
-                        class="h-6 absolute inset-y-2 top-9 right-1 flex items-center pr-2 z-index-100 focus:outline-none"
+                        :placeholder="$t('New password')" 
+                        class="w-full"
+                        required
                       >
-                        <IconEyeSolid class="w-6 h-6 text-gray-400"  v-if="!unmasked" />
-                        <IconEyeSlashSolid class="w-6 h-6 text-gray-400" v-else />
-                      </button>
+                        <template #rightIcon>
+                          <button
+                            type="button"
+                            @click="unmasked = !unmasked"
+                            class="text-gray-400 dark:text-gray-300"
+                          >
+                            <IconEyeSolid class="w-6 h-6 text-gray-400"  v-if="!unmasked" />
+                            <IconEyeSlashSolid class="w-6 h-6 text-gray-400" v-else />
+                          </button>
+                        </template>
+                      </Input>
                     </div>
 
                     <div v-if="isPasswordNeeded" class="relative">
                       <label for="password_confirmation" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">{{$t('Confirm your password')}}</label>
-                      <input 
+                      <Input
+                        :type="unmasked ? 'text' : 'password'"
+                        name="password_confirmation"
+                        id="password_confirmation"
+                        tabindex="3"
                         ref="passwordConfirmationInput"
                         autocomplete="new-password"
-                        :type="unmasked ? 'text' : 'password'"
-                        name="password_confirmation" id="password_confirmation" 
-                        tabindex="3"
                         v-model="passwordConfirmation"
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white" 
-                        :placeholder="$t('Confirm new password')" required 
-                      />
-
-                      <button
-                        type="button"
-                        @click="unmasked = !unmasked"
-                        class="h-6 absolute inset-y-2 top-9 right-1 flex items-center pr-2 z-index-100 focus:outline-none"
+                        class="w-full"
+                        :placeholder="$t('Confirm new password')" 
+                        required
                       >
-                        <IconEyeSolid class="w-6 h-6 text-gray-400"  v-if="!unmasked" />
-                        <IconEyeSlashSolid class="w-6 h-6 text-gray-400" v-else />
-                      </button>
+                        <template #rightIcon>
+                          <button
+                            type="button"
+                            @click="unmasked = !unmasked"
+                            class="text-gray-400 dark:text-gray-300"
+                          >
+                            <IconEyeSolid class="w-6 h-6 text-gray-400"  v-if="!unmasked" />
+                            <IconEyeSlashSolid class="w-6 h-6 text-gray-400" v-else />
+                          </button>
+                        </template>
+                      </Input>
                     </div>
 
                     <div v-if="validationError || error" class="flex items-center p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400" role="alert">
@@ -116,7 +124,7 @@
                       {{$t('Sign up')}}
                     </Button>
                   </form>
-<!-- END of set new paasord -->
+<!-- END of set new password -->
                   <div v-else class="flex items center justify-center p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50 dark:bg-green-800 dark:text-green-400" role="alert">
                     {{$t('Please check your email at')}} {{ sentToEmail }} {{$t('to confirm your email address.')}}
                   </div> 
@@ -140,6 +148,7 @@ import { callAdminForthApi, loadFile, applyRegexValidation } from '@/utils';
 import { onBeforeRouteUpdate, useRoute, useRouter } from 'vue-router';
 import { IconEyeSolid, IconEyeSlashSolid } from '@iconify-prerendered/vue-flowbite';
 import Button from '@/afcl/Button.vue';
+import Input from '@/afcl/Input.vue';
 import Link from '@/afcl/Link.vue';
 import { useI18n } from 'vue-i18n';
 import adminforth from '@/adminforth';
@@ -155,6 +164,7 @@ const emailInput: Ref<HTMLInputElement | null> = ref(null);
 const passwordInput: Ref<HTMLInputElement | null> = ref(null);
 const passwordConfirmationInput: Ref<HTMLInputElement | null> = ref(null);
 
+const email = ref("");
 const password = ref("");
 const passwordConfirmation = ref("");
 const unmasked = ref(false);
@@ -274,8 +284,7 @@ onMounted(async () => {
 
 async function doSignup() {
   error.value = null;
-  const email = emailInput.value!.value;
-  if (!email) {
+  if (!email.value) {
     error.value = t('Please enter your email');
     return;
   }
@@ -289,7 +298,7 @@ async function doSignup() {
     path: `/plugin/${route.meta.pluginInstanceId}/signup`,
     method: 'POST',
     body: {
-      email,
+      email: email.value,
       url: window.location.origin + window.location.pathname,
       ...(!requestEmailConfirmation.value ? {password: password.value} : {}),
     }
@@ -300,7 +309,7 @@ async function doSignup() {
   } else {
     error.value = null;
     requestSent.value = true;
-    sentToEmail.value = email;
+    sentToEmail.value = email.value;
     if (resp.redirectTo && !requestEmailConfirmation.value) {
       router.push(resp.redirectTo);
     } else if (!requestEmailConfirmation.value) {
