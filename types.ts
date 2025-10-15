@@ -64,5 +64,8 @@ export interface PluginOptions {
     afterUserSave?: any;
   }
   
-
+  /**
+   * Signup component order inder login button
+   */
+  loginPageComponentOrder?: number;
 }

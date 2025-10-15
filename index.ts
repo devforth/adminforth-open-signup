@@ -71,8 +71,8 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
     }
     this.passwordField = passwordField;
 
-    (adminforth.config.customization.loginPageInjections.underInputs as AdminForthComponentDeclaration[]).push({ 
-      file: this.componentPath('SignupUnderLogin.vue'),
+    (adminforth.config.customization.loginPageInjections.underLoginButton as AdminForthComponentDeclaration[]).push({ 
+      file: this.componentPath('SignupUnderLogin.vue'), meta: { afOrder: this.options.loginPageComponentOrder }
     });
     adminforth.config.customization.customPages.push({
       path: '/signup',
