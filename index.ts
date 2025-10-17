@@ -79,7 +79,7 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
       component: { 
         file: this.componentPath('SignupPage.vue'), 
         meta: { 
-          customLayout: true, 
+          sidebarAndHeader: "none",
           pluginInstanceId: this.pluginInstanceId,
           requestEmailConfirmation: !!this.options.confirmEmails
         }
