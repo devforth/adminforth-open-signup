@@ -15,11 +15,9 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
   constructor(options: PluginOptions) {
     super(options, import.meta.url);
     this.options = options;
+    this.shouldHaveSingleInstancePerWholeApp = () => true;
   }
 
-  shouldHaveSingleInstancePerWholeApp(): boolean {
-    return true;
-  }
 
   async modifyResourceConfig(adminforth: IAdminForth, resourceConfig: AdminForthResource) {
     super.modifyResourceConfig(adminforth, resourceConfig);
