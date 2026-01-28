@@ -186,7 +186,7 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
           [this.options.confirmEmails.emailConfirmedField]: true,
           [this.options.passwordHashField]: await AdminForth.Utils.generatePasswordHash(password),
         });
-        return await this.doLogin(email, response, { body, headers, query, cookies, requestUrl });
+        return await this.doLogin(email, response, { body, headers, query, cookies, requestUrl, response });
       }
     });
 
@@ -286,7 +286,7 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
         }
         
         if (!this.options.confirmEmails) {
-          const resp = await this.doLogin(email, response, { body, headers, query, cookies, requestUrl });
+          const resp = await this.doLogin(email, response, { body, headers, query, cookies, requestUrl, response });
           return resp;
         }
 
