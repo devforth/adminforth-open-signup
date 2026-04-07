@@ -20,7 +20,7 @@
     "signup"
   ],
   "author": "devforth",
-  "license": "ISC",
+  "license": "MIT",
   "description": "Open signup for adminforth",
   "dependencies": {
     "@aws-sdk/client-ses": "^3.654.0"
