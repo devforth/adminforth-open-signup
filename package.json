@@ -19,7 +19,7 @@
     "adminforth",
     "signup"
   ],
-  "author": "devforth",
+  "author": "DevForth (https://devforth.io)",
   "license": "MIT",
   "description": "Open signup for adminforth",
   "dependencies": {
