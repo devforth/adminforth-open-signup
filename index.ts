@@ -165,10 +165,14 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
       noAuth: true,
       handler: async ({ body, response, headers, query, cookies, tr, requestUrl }) => {
         const { token, password } = body;
-        const { email } = await this.adminforth.auth.verify(token, 'tempVerifyEmailToken', false);
-        if (!email) {
+        if (!token) {
           return { error: await tr('Invalid token', 'opensignup'), ok: false };
         }
+        const decoded = await this.adminforth.auth.verify(token, 'tempVerifyEmailToken', false);
+        if (!decoded || !decoded.email) {
+          return { error: await tr('Invalid token', 'opensignup'), ok: false };
+        }
+        const { email } = decoded;
 
         if(!password) {
           return { error: await tr('Password is required', 'opensignup'), ok: false };
@@ -196,6 +200,12 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
       noAuth: true,
       handler: async ({ body, response, headers, query, cookies, tr, requestUrl }) => {
         const { email, url, password } = body;
+        if (!email || typeof email !== 'string') {
+          return { error: await tr('Email is required', 'opensignup'), ok: false };
+        }
+        if (!this.options.confirmEmails && !password) {
+          return { error: await tr('Password is required', 'opensignup'), ok: false };
+        }
         const extra = { body, headers, query, cookies, requestUrl: url };
         // validate email
         if (this.emailField.validation) {
