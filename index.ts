@@ -1,6 +1,18 @@
 import AdminForth, { AdminForthPlugin, Filters, suggestIfTypo, AdminForthDataTypes } from "adminforth";
 import type { IAdminForth, IHttpServer, AdminForthComponentDeclaration, AdminForthResourceColumn, AdminForthResource, BeforeLoginConfirmationFunction, HttpExtra } from "adminforth";
 import type { PluginOptions } from './types.js';
+import { z } from "zod";
+
+const completeVerifiedSignupBodySchema = z.object({
+  token: z.string(),
+  password: z.string(),
+}).strict();
+
+const signupBodySchema = z.object({
+  email: z.string(),
+  url: z.string(),
+  password: z.string().optional(),
+}).strict();
 
 
 export default class OpenSignupPlugin extends AdminForthPlugin {
@@ -16,6 +28,19 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
     super(options, import.meta.url);
     this.options = options;
     this.shouldHaveSingleInstancePerWholeApp = () => true;
+  }
+
+  private parseBody<T>(
+    schema: z.ZodType<T>,
+    body: unknown,
+    response: { setStatus: (code: number, message: string) => void },
+  ): T | null {
+    const parsed = schema.safeParse(body ?? {});
+    if (!parsed.success) {
+      response.setStatus(422, parsed.error.message);
+      return null;
+    }
+    return parsed.data;
   }
 
 
@@ -164,7 +189,9 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
       path: `/plugin/${this.pluginInstanceId}/complete-verified-signup`,
       noAuth: true,
       handler: async ({ body, response, headers, query, cookies, tr, requestUrl }) => {
-        const { token, password } = body;
+        const data = this.parseBody(completeVerifiedSignupBodySchema, body, response);
+        if (!data) return;
+        const { token, password } = data;
         if (!token) {
           return { error: await tr('Invalid token', 'opensignup'), ok: false };
         }
@@ -199,7 +226,9 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
       path: `/plugin/${this.pluginInstanceId}/signup`,
       noAuth: true,
       handler: async ({ body, response, headers, query, cookies, tr, requestUrl }) => {
-        const { email, url, password } = body;
+        const data = this.parseBody(signupBodySchema, body, response);
+        if (!data) return;
+        const { email, url, password } = data;
         if (!email || typeof email !== 'string') {
           return { error: await tr('Email is required', 'opensignup'), ok: false };
         }
