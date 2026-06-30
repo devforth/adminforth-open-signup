@@ -1,6 +1,18 @@
-import AdminForth, { AdminForthPlugin, Filters, suggestIfTypo, AdminForthDataTypes } from "adminforth";
+import AdminForth, { AdminForthPlugin, parseBody, Filters, suggestIfTypo, AdminForthDataTypes } from "adminforth";
 import type { IAdminForth, IHttpServer, AdminForthComponentDeclaration, AdminForthResourceColumn, AdminForthResource, BeforeLoginConfirmationFunction, HttpExtra } from "adminforth";
 import type { PluginOptions } from './types.js';
+import { z } from "zod";
+
+const completeVerifiedSignupBodySchema = z.object({
+  token: z.string(),
+  password: z.string(),
+}).strict();
+
+const signupBodySchema = z.object({
+  email: z.string(),
+  url: z.string(),
+  password: z.string().optional(),
+}).strict();
 
 
 export default class OpenSignupPlugin extends AdminForthPlugin {
@@ -149,13 +161,23 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
       path: `/plugin/${this.pluginInstanceId}/password-constraints`,
       noAuth: true,
       handler: async ({tr}) => {
-        return {
-          minLength: this.passwordField.minLength,
-          maxLength: this.passwordField.maxLength,
-          validation: await Promise.all(
+        if (!this.passwordField) {
+          throw new Error(`passwordField is not defined in plugin options`);
+        }
+        const objectToReturn: any = {};
+
+        if (this.passwordField.minLength) {
+          objectToReturn.minLength = this.passwordField.minLength;
+        }
+        if (this.passwordField.maxLength) {
+          objectToReturn.maxLength = this.passwordField.maxLength;
+        }
+        if (this.passwordField.validation) {
+          objectToReturn.validation = await Promise.all(
             this.passwordField.validation.map(async ({ regExp, message }) => ({ regExp, message: await tr(message, 'opensignup') }))
-          ),
-        };
+          );
+        }
+        return objectToReturn;
       }
     });
     
@@ -164,7 +186,10 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
       path: `/plugin/${this.pluginInstanceId}/complete-verified-signup`,
       noAuth: true,
       handler: async ({ body, response, headers, query, cookies, tr, requestUrl }) => {
-        const { token, password } = body;
+        const parsed = parseBody(completeVerifiedSignupBodySchema, body, response);
+        if ('error' in parsed) return parsed.error;
+        const data = parsed.data;
+        const { token, password } = data;
         if (!token) {
           return { error: await tr('Invalid token', 'opensignup'), ok: false };
         }
@@ -199,7 +224,10 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
       path: `/plugin/${this.pluginInstanceId}/signup`,
       noAuth: true,
       handler: async ({ body, response, headers, query, cookies, tr, requestUrl }) => {
-        const { email, url, password } = body;
+        const parsed = parseBody(signupBodySchema, body, response);
+        if ('error' in parsed) return parsed.error;
+        const data = parsed.data;
+        const { email, url, password } = data;
         if (!email || typeof email !== 'string') {
           return { error: await tr('Email is required', 'opensignup'), ok: false };
         }
