@@ -161,13 +161,23 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
       path: `/plugin/${this.pluginInstanceId}/password-constraints`,
       noAuth: true,
       handler: async ({tr}) => {
-        return {
-          minLength: this.passwordField.minLength,
-          maxLength: this.passwordField.maxLength,
-          validation: await Promise.all(
+        if (!this.passwordField) {
+          throw new Error(`passwordField is not defined in plugin options`);
+        }
+        const objectToReturn: any = {};
+
+        if (this.passwordField.minLength) {
+          objectToReturn.minLength = this.passwordField.minLength;
+        }
+        if (this.passwordField.maxLength) {
+          objectToReturn.maxLength = this.passwordField.maxLength;
+        }
+        if (this.passwordField.validation) {
+          objectToReturn.validation = await Promise.all(
             this.passwordField.validation.map(async ({ regExp, message }) => ({ regExp, message: await tr(message, 'opensignup') }))
-          ),
-        };
+          );
+        }
+        return objectToReturn;
       }
     });
     
