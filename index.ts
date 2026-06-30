@@ -1,4 +1,4 @@
-import AdminForth, { AdminForthPlugin, Filters, suggestIfTypo, AdminForthDataTypes } from "adminforth";
+import AdminForth, { AdminForthPlugin, parseBody, Filters, suggestIfTypo, AdminForthDataTypes } from "adminforth";
 import type { IAdminForth, IHttpServer, AdminForthComponentDeclaration, AdminForthResourceColumn, AdminForthResource, BeforeLoginConfirmationFunction, HttpExtra } from "adminforth";
 import type { PluginOptions } from './types.js';
 import { z } from "zod";
@@ -28,22 +28,6 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
     super(options, import.meta.url);
     this.options = options;
     this.shouldHaveSingleInstancePerWholeApp = () => true;
-  }
-
-  private parseBody<T>(
-    schema: z.ZodType<T>,
-    body: unknown,
-    response: { setStatus: (code: number, message: string) => void },
-  ): { ok: true; data: T } | { ok: false; error: { error: string; details: unknown } } {
-    const parsed = schema.safeParse(body ?? {});
-    if (!parsed.success) {
-      response.setStatus(400, '');
-      return {
-        ok: false,
-        error: { error: 'Request body validation failed', details: parsed.error.issues },
-      };
-    }
-    return { ok: true, data: parsed.data };
   }
 
 
@@ -192,7 +176,7 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
       path: `/plugin/${this.pluginInstanceId}/complete-verified-signup`,
       noAuth: true,
       handler: async ({ body, response, headers, query, cookies, tr, requestUrl }) => {
-        const parsed = this.parseBody(completeVerifiedSignupBodySchema, body, response);
+        const parsed = parseBody(completeVerifiedSignupBodySchema, body, response);
         if ('error' in parsed) return parsed.error;
         const data = parsed.data;
         const { token, password } = data;
@@ -230,7 +214,7 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
       path: `/plugin/${this.pluginInstanceId}/signup`,
       noAuth: true,
       handler: async ({ body, response, headers, query, cookies, tr, requestUrl }) => {
-        const parsed = this.parseBody(signupBodySchema, body, response);
+        const parsed = parseBody(signupBodySchema, body, response);
         if ('error' in parsed) return parsed.error;
         const data = parsed.data;
         const { email, url, password } = data;
