@@ -34,13 +34,16 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
     schema: z.ZodType<T>,
     body: unknown,
     response: { setStatus: (code: number, message: string) => void },
-  ): T | null {
+  ): { ok: true; data: T } | { ok: false; error: { error: string; details: unknown } } {
     const parsed = schema.safeParse(body ?? {});
     if (!parsed.success) {
-      response.setStatus(422, parsed.error.message);
-      return null;
+      response.setStatus(400, '');
+      return {
+        ok: false,
+        error: { error: 'Request body validation failed', details: parsed.error.issues },
+      };
     }
-    return parsed.data;
+    return { ok: true, data: parsed.data };
   }
 
 
@@ -189,8 +192,9 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
       path: `/plugin/${this.pluginInstanceId}/complete-verified-signup`,
       noAuth: true,
       handler: async ({ body, response, headers, query, cookies, tr, requestUrl }) => {
-        const data = this.parseBody(completeVerifiedSignupBodySchema, body, response);
-        if (!data) return;
+        const parsed = this.parseBody(completeVerifiedSignupBodySchema, body, response);
+        if ('error' in parsed) return parsed.error;
+        const data = parsed.data;
         const { token, password } = data;
         if (!token) {
           return { error: await tr('Invalid token', 'opensignup'), ok: false };
@@ -226,8 +230,9 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
       path: `/plugin/${this.pluginInstanceId}/signup`,
       noAuth: true,
       handler: async ({ body, response, headers, query, cookies, tr, requestUrl }) => {
-        const data = this.parseBody(signupBodySchema, body, response);
-        if (!data) return;
+        const parsed = this.parseBody(signupBodySchema, body, response);
+        if ('error' in parsed) return parsed.error;
+        const data = parsed.data;
         const { email, url, password } = data;
         if (!email || typeof email !== 'string') {
           return { error: await tr('Email is required', 'opensignup'), ok: false };
