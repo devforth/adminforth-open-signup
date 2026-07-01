@@ -1,4 +1,4 @@
-import AdminForth, { AdminForthPlugin, parseBody, Filters, suggestIfTypo, AdminForthDataTypes } from "adminforth";
+import AdminForth, { AdminForthPlugin, Filters, suggestIfTypo, AdminForthDataTypes } from "adminforth";
 import type { IAdminForth, IHttpServer, AdminForthComponentDeclaration, AdminForthResourceColumn, AdminForthResource, BeforeLoginConfirmationFunction, HttpExtra } from "adminforth";
 import type { PluginOptions } from './types.js';
 import { z } from "zod";
@@ -185,10 +185,9 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
       method: 'POST',
       path: `/plugin/${this.pluginInstanceId}/complete-verified-signup`,
       noAuth: true,
+      request_schema: completeVerifiedSignupBodySchema,
       handler: async ({ body, response, headers, query, cookies, tr, requestUrl }) => {
-        const parsed = parseBody(completeVerifiedSignupBodySchema, body, response);
-        if ('error' in parsed) return parsed.error;
-        const data = parsed.data;
+        const data = body as z.infer<typeof completeVerifiedSignupBodySchema>;
         const { token, password } = data;
         if (!token) {
           return { error: await tr('Invalid token', 'opensignup'), ok: false };
@@ -223,10 +222,9 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
       method: 'POST',
       path: `/plugin/${this.pluginInstanceId}/signup`,
       noAuth: true,
+      request_schema: signupBodySchema,
       handler: async ({ body, response, headers, query, cookies, tr, requestUrl }) => {
-        const parsed = parseBody(signupBodySchema, body, response);
-        if ('error' in parsed) return parsed.error;
-        const data = parsed.data;
+        const data = body as z.infer<typeof signupBodySchema>;
         const { email, url, password } = data;
         if (!email || typeof email !== 'string') {
           return { error: await tr('Email is required', 'opensignup'), ok: false };
