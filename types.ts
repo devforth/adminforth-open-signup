@@ -70,4 +70,11 @@ export interface PluginOptions extends PluginsCommonOptions {
    * Signup component order inder login button
    */
   loginPageComponentOrder?: number;
+
+   /**
+   * The origin(s) (scheme + host + optional port) of the admin panel that are
+   * allowed to appear in password reset links, e.g. "https://admin.example.com".
+   */
+  expectedOrigin: string | string[];
+
 }

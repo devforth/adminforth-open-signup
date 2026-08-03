@@ -106,6 +106,28 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
         adminforth.config.auth.beforeLoginConfirmation = [];
       }
     }
+
+    const rawOrigins = this.options.expectedOrigin;
+    const originList = Array.isArray(rawOrigins) ? rawOrigins : [rawOrigins];
+    if (!rawOrigins || originList.length === 0 || originList.some(o => !o)) {
+      throw new Error(
+        'EmailPasswordReset: expectedOrigin is required. Set it to the admin panel origin(s) ' +
+        '(e.g. "https://admin.example.com") so reset links can only point to a trusted host.'
+      );
+    }
+    for (const origin of originList) {
+      try {
+        new URL(origin);
+      } catch {
+        throw new Error(`EmailPasswordReset: expectedOrigin "${origin}" is not a valid absolute URL/origin.`);
+      }
+    }
+  }
+
+  getAllowedOrigins(): string[] {
+    const rawOrigins = this.options.expectedOrigin;
+    const originList = Array.isArray(rawOrigins) ? rawOrigins : [rawOrigins];
+    return originList.map(o => new URL(o).origin);
   }
   
   validateConfigAfterDiscover(adminforth: IAdminForth, resourceConfig: AdminForthResource) {
@@ -232,6 +254,19 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
         if (!this.options.confirmEmails && !password) {
           return { error: await tr('Password is required', 'opensignup'), ok: false };
         }
+
+        let resetLink: string;
+        try {
+          const parsedUrl = new URL(url);
+          if (!this.getAllowedOrigins().includes(parsedUrl.origin)) {
+            return { error: 'Invalid reset url', ok: false };
+          }
+          parsedUrl.hash = '';
+          resetLink = parsedUrl.toString();
+        } catch {
+          return { error: 'Invalid reset url', ok: false };
+        }
+
         const extra = { body, headers, query, cookies, requestUrl: url };
         // validate email
         if (this.emailField.validation) {
