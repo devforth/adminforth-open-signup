@@ -373,7 +373,7 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
                   
                   To confirm your email, click the link below:\n\n
 
-                  {url}?verifyToken={verifyToken}\n\n
+                  {resetLink}?token={verifyToken}\n\n
 
                   If you didn't request this, please ignore this email.\n\n
                   Link is valid for 2 hours.\n\n
@@ -381,7 +381,7 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
                   Thanks,
                   The {brandName} Team
                                     
-                `, 'opensignup', { brandName, url, verifyToken }
+                `, 'opensignup', { brandName, resetLink, verifyToken }
         );
 
         const emailData = {
@@ -402,7 +402,7 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
               <p>${emailData.greeting}</p>
               <p>${emailData.welcome}</p>
               <p>${emailData.instruction}</p>
-              <a href="${url}?token=${verifyToken}">${emailData.linkText}</a>
+              <a href="${resetLink}?token=${verifyToken}">${emailData.linkText}</a>
               <p>${emailData.disclaimer}</p>
               <p>${emailData.validity}</p>
               <p>${emailData.thanks}</p>
