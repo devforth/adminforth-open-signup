@@ -129,6 +129,15 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
     const originList = Array.isArray(rawOrigins) ? rawOrigins : [rawOrigins];
     return originList.map(o => new URL(o).origin);
   }
+
+  normalizeUsername(email: string): string {
+    if (this.adminforth.config.auth.usernameField !== this.emailField.name) {
+      return email;
+    }
+
+    const normalize = (this.emailField as AdminForthResourceColumn & { normalize?: (value: any) => any }).normalize;
+    return normalize ? normalize(email) : email;
+  }
   
   validateConfigAfterDiscover(adminforth: IAdminForth, resourceConfig: AdminForthResource) {
     if (this.options.confirmEmails) {
@@ -151,9 +160,8 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
   }
 
   async doLogin(email: string, response: any, extra: HttpExtra): Promise<{ error?: string; allowedLogin: boolean; redirectTo?: string; }> {
-
-    const username = email;
-    const userRecord = await this.adminforth.resource(this.authResource.resourceId).get(Filters.EQ(this.emailField.name, email));
+    const username = this.normalizeUsername(email);
+    const userRecord = await this.adminforth.resource(this.authResource.resourceId).get(Filters.EQ(this.emailField.name, username));
     const adminUser = { 
       dbUser: userRecord,
       pk: userRecord[this.authResource.columns.find((col) => col.primaryKey).name], 
@@ -218,7 +226,7 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
         if (!decoded || !decoded.email) {
           return { error: await tr('Invalid token', 'opensignup'), ok: false };
         }
-        const { email } = decoded;
+        const email = this.normalizeUsername(decoded.email);
 
         if(!password) {
           return { error: await tr('Password is required', 'opensignup'), ok: false };
@@ -251,6 +259,7 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
         if (!email || typeof email !== 'string') {
           return { error: await tr('Email is required', 'opensignup'), ok: false };
         }
+        const normalizedEmail = this.normalizeUsername(email);
         if (!this.options.confirmEmails && !password) {
           return { error: await tr('Password is required', 'opensignup'), ok: false };
         }
@@ -271,7 +280,7 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
         // validate email
         if (this.emailField.validation) {
           for (const { regExp, message } of this.emailField.validation) {
-            if (!new RegExp(regExp).test(email)) {
+            if (!new RegExp(regExp).test(normalizedEmail)) {
               return { error: await tr(message, 'opensignup'), ok: false };
             }
           }
@@ -299,10 +308,6 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
           }
         }
         
-        // This is not needed when right email validator is set on email field because
-        // it will not allow to create such email, but if user forgot to set it it might save situation 
-        const normalizedEmail = email.toLowerCase();  // normalize email
-
         // first check again if email already exists
         const existingUser = await this.adminforth.resource(this.authResource.resourceId).get(Filters.EQ(this.emailField.name, normalizedEmail));
         if ((!this.options.confirmEmails && existingUser) || (this.options.confirmEmails && existingUser?.[this.emailConfirmedField.name])) {
@@ -365,7 +370,7 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
 
         const brandName = this.adminforth.config.customization.brandName;
 
-        const verifyToken = this.adminforth.auth.issueJWT({email, issuer: brandName }, 'tempVerifyEmailToken', '2h');
+        const verifyToken = this.adminforth.auth.issueJWT({ email: normalizedEmail, issuer: brandName }, 'tempVerifyEmailToken', '2h');
         process.env.HEAVY_DEBUG && console.log('🐛Sending reset tok to', verifyToken);
         const emailText = await tr(`
                   Dear user,
@@ -413,7 +418,7 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
         const emailSubject = await tr(`Signup request at {brandName}`, 'opensignup', { brandName });
 
         // send email with AWS SES this.options.providerOptions.AWS_SES
-        this.options.confirmEmails.adapter.sendEmail(this.options.confirmEmails.sendFrom, email, emailText, emailHtml, emailSubject);
+        this.options.confirmEmails.adapter.sendEmail(this.options.confirmEmails.sendFrom, normalizedEmail, emailText, emailHtml, emailSubject);
 
         return { ok: true };
       }
