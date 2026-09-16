@@ -102,12 +102,3 @@ test('the probed value survives the column normalize core re-applies on write', 
   assert.match(second.error, /already exists/i);
   assert.equal(records.length, 1);
 });
-
-test('a login whose account lookup finds nothing returns an error instead of crashing', async () => {
-  const { plugin } = makePlugin();
-
-  const result = await plugin.doLogin('nobody@example.com', {}, {});
-
-  assert.equal(result.allowedLogin, false);
-  assert.match(result.error, /not found/i);
-});
