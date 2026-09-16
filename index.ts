@@ -130,11 +130,13 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
     return originList.map(o => new URL(o).origin);
   }
 
-  // Unconditional fold: this value is both the lookup filter and the value stored.
   normalizeUsername(email: string): string {
-    const folded = typeof email === 'string' ? email.toLowerCase() : email;
+    if (this.adminforth.config.auth.usernameField !== this.emailField.name) {
+      return email;
+    }
+
     const normalize = (this.emailField as AdminForthResourceColumn & { normalize?: (value: any) => any }).normalize;
-    return normalize ? normalize(folded) : folded;
+    return normalize ? normalize(email) : email;
   }
   
   validateConfigAfterDiscover(adminforth: IAdminForth, resourceConfig: AdminForthResource) {
@@ -160,7 +162,7 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
   async doLogin(email: string, response: any, extra: HttpExtra): Promise<{ error?: string; allowedLogin: boolean; redirectTo?: string; }> {
     const username = this.normalizeUsername(email);
     const userRecord = await this.adminforth.resource(this.authResource.resourceId).get(Filters.EQ(this.emailField.name, username));
-    const adminUser = {
+    const adminUser = { 
       dbUser: userRecord,
       pk: userRecord[this.authResource.columns.find((col) => col.primaryKey).name], 
       username,

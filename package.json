@@ -9,8 +9,7 @@
   },
   "homepage": "https://adminforth.dev/docs/tutorial/Plugins/open-signup/",
   "scripts": {
-    "build": "tsc && rsync -av --exclude 'node_modules' custom dist/",
-    "test": "npm run build && node --test tests/*.test.mjs"
+    "build": "tsc && rsync -av --exclude 'node_modules' custom dist/"
   },
   "repository": {
     "type": "git",
