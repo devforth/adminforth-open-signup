@@ -160,6 +160,9 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
   async doLogin(email: string, response: any, extra: HttpExtra): Promise<{ error?: string; allowedLogin: boolean; redirectTo?: string; }> {
     const username = this.normalizeUsername(email);
     const userRecord = await this.adminforth.resource(this.authResource.resourceId).get(Filters.EQ(this.emailField.name, username));
+    if (!userRecord) {
+      return { allowedLogin: false, error: 'User not found' };
+    }
     const adminUser = {
       dbUser: userRecord,
       pk: userRecord[this.authResource.columns.find((col) => col.primaryKey).name], 
