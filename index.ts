@@ -176,7 +176,8 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
         username,
         pk: userRecord[
           this.authResource.columns.find((col) => col.primaryKey).name
-        ] 
+        ],
+        extra,
       });
     }
 
