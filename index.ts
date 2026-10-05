@@ -171,9 +171,9 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
 
     await this.adminforth.restApi.processLoginCallbacks(adminUser, toReturn, response, extra);
     if (toReturn.allowedLogin) {
-      this.adminforth.auth.setAuthCookie({ 
-        response, 
-        username, 
+      await this.adminforth.auth.setAuthCookie({
+        response,
+        username,
         pk: userRecord[
           this.authResource.columns.find((col) => col.primaryKey).name
         ] 
