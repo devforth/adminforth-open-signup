@@ -1,5 +1,5 @@
 <template>
-  <p class="text-gray-500 dark:text-gray-400 font-sm text-left mt-3">
+  <p class="af-signup-link text-sm text-left mt-3 text-lightLoginViewSubTextColor dark:text-darkLoginViewSubTextColor">
     {{$t('Have no account?')}} 
     <Link :to="`/signup${route.query.next ? `?next=${encodeURIComponent(route.query.next)}` : ''}`">
       {{$t('sign up now')}}
