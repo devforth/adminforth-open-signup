@@ -215,6 +215,7 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
     server.endpoint({
       method: 'POST',
       path: `/plugin/${this.pluginInstanceId}/complete-verified-signup`,
+      agent: { hiddenFromAgents: true },
       noAuth: true,
       request_schema: completeVerifiedSignupBodySchema,
       handler: async ({ body, response, headers, query, cookies, tr, requestUrl }) => {
@@ -252,6 +253,7 @@ export default class OpenSignupPlugin extends AdminForthPlugin {
     server.endpoint({
       method: 'POST',
       path: `/plugin/${this.pluginInstanceId}/signup`,
+      agent: { hiddenFromAgents: true },
       noAuth: true,
       request_schema: signupBodySchema,
       handler: async ({ body, response, headers, query, cookies, tr, requestUrl }) => {
