@@ -229,7 +229,7 @@ onBeforeMount(() => {
 
 onMounted(async () => {
   emailInput.value?.focus();
-  await coreStore.getPublicConfig();
+  await coreStore.fetchConfig({ redirectToLoginIfNotLoggedIn: false });
 
   await nextTick();
   await router.isReady();
